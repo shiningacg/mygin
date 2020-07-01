@@ -52,7 +52,11 @@ func (c *Context) Body(b []byte) {
 }
 
 func (c *Context) GetBody() []byte {
-	return c.Value("SYS_BODY").([]byte)
+	body := c.Value("SYS_BODY")
+	if body == nil {
+		return []byte{}
+	}
+	return body.([]byte)
 }
 
 func (c *Context) Next() {
