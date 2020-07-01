@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/shlande/mygin"
 	"io"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -20,8 +20,7 @@ func Args() mygin.HandlerFunc {
 		if context.Request.Method == "POST" {
 			args, err := parseBodyJson(context.Request.Body)
 			if err != nil {
-				fmt.Println("hihii")
-				fmt.Println(err)
+				log.Println(err)
 				context.Abort()
 			}
 			for key, value := range args {
@@ -117,7 +116,6 @@ func readAll(dst []byte, src io.Reader) (int, error) {
 		}
 		total += n
 	}
-	fmt.Println(total)
 	return total, nil
 }
 

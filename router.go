@@ -1,7 +1,5 @@
 package mygin
 
-import "fmt"
-
 const (
 	GET    = "GET"
 	POST   = "POST"
@@ -107,7 +105,6 @@ func (r *router) Do(handlerFunc HandlerFunc) {
 	r.engine.addRouter(r.method, r.path, func(c *Context) {
 		// 附加方法
 		c.handlers = append(r.handlers, handlerFunc)
-		fmt.Println(c.handlers)
 		// 启动处理
 		c.handlers[0](c)
 	})
