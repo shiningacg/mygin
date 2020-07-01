@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/shlande/sn"
+	"github.com/shlande/mygin"
 	"io"
 	"reflect"
 	"strconv"
@@ -15,8 +15,8 @@ const (
 )
 
 // 负责参数校验
-func Args() sn.HandlerFunc {
-	return func(context *sn.Context) {
+func Args() mygin.HandlerFunc {
+	return func(context *mygin.Context) {
 		if context.Request.Method == "POST" {
 			args, err := parseBodyJson(context.Request.Body)
 			if err != nil {
@@ -37,7 +37,7 @@ func key(k string) string {
 }
 
 // TODO：添加tag类验证支持
-func Merge(ctx *sn.Context, target interface{}) error {
+func Merge(ctx *mygin.Context, target interface{}) error {
 	v := reflect.ValueOf(target).Elem()
 	t := reflect.TypeOf(target).Elem()
 	count := v.NumField()
@@ -105,7 +105,7 @@ func readAll(dst []byte, src io.Reader) (int, error) {
 	var total, n int
 	for {
 		if cap(dst[total:]) == 0 {
-			return 0, sn.ErrReachLimitSize
+			return 0, mygin.ErrReachLimitSize
 		}
 		n, err = src.Read(dst[total:])
 		if err != nil {

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/shlande/sn"
+	"github.com/shlande/mygin"
 	"log"
 	"testing"
 )
@@ -14,9 +14,9 @@ type DTO struct {
 }
 
 func TestArgs(t *testing.T) {
-	mygin := sn.New()
+	mygin := mygin.New()
 	root := mygin.Router()
-	root.Post("/").Use(Args()).Do(func(context *sn.Context) {
+	root.Post("/").Use(Args()).Do(func(context *mygin.Context) {
 		dto := &DTO{}
 		err := Merge(context, dto)
 		if err != nil {
