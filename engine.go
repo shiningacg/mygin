@@ -1,13 +1,17 @@
 package sn
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 var (
 	default404Body = []byte("404 page not found")
 	default405Body = []byte("405 method not allowed")
+
+	ErrReachLimitSize = errors.New("发送的数据大小超过限制")
 )
 
 // 中间件的实际调用的处理方法
@@ -27,16 +31,24 @@ func (e *Engine) addRouter(httpMethod, path string, handler HandlerFunc) {
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c := NewContext(req, w)
-	c.req = req
-	c.p = w
+	c.Request = req
+	c.Write = w
 	e.handleHTTPRequest(c)
 }
 
 func (e *Engine) handleHTTPRequest(ctx *Context) {
-	// 解析路由
-	req := ctx.req
-	w := ctx.p
-	e.tree.match(req.RequestURI, req.Method)(ctx)
+	req := ctx.Request
+	w := ctx.Write
+	// 参数获取
+	if req.Method == GET {
+		// get参数获取
+		e.parseGet(ctx)
+	}
+	// TODO：form数据获取
+	// 路由匹配
+	handle := e.tree.match(req.RequestURI, req.Method)
+	// 开始进行处理
+	handle(ctx)
 	// 写body和status
 	w.WriteHeader(ctx.GetStatus())
 	writeHeader(ctx)
@@ -44,12 +56,27 @@ func (e *Engine) handleHTTPRequest(ctx *Context) {
 	if err != nil {
 		log.Print(err)
 	}
+	err = req.Body.Close()
+	if err != nil {
+		log.Print(err)
+	}
+}
+
+func (e *Engine) parseGet(ctx *Context) {
+	u, err := url.Parse(ctx.Request.RequestURI)
+	if err != nil {
+		return
+	}
+	m := u.Query()
+	for name, value := range m {
+		ctx.Set(name, value[0])
+	}
 }
 
 func writeHeader(ctx *Context) {
 	headers := ctx.GetHeaders()
 	for key, value := range headers {
-		ctx.p.Header().Set(key, value)
+		ctx.Write.Header().Set(key, value)
 	}
 }
 

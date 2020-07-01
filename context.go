@@ -1,16 +1,19 @@
 package sn
 
 import (
+	"math"
 	"net/http"
 )
+
+const abortIndex int8 = math.MaxInt8 / 2
 
 func NewContext(r *http.Request, p http.ResponseWriter) *Context {
 	var caches = make(map[string]interface{})
 	return &Context{
 		handlers: nil,
 		caches:   caches,
-		req:      r,
-		p:        p,
+		Request:  r,
+		Write:    p,
 	}
 }
 
@@ -20,8 +23,8 @@ type Context struct {
 	handlers HandlersChain
 	index    int8
 	caches   map[string]interface{}
-	req      *http.Request
-	p        http.ResponseWriter
+	Request  *http.Request
+	Write    http.ResponseWriter
 }
 
 func (c *Context) Value(key string) interface{} {
@@ -32,13 +35,12 @@ func (c *Context) Set(key string, value interface{}) {
 	c.caches[key] = value
 }
 
-func (c *Context) Break() {
-	c.caches["SYS_BREAK"] = nil
+func (c *Context) Abort() {
+	c.index = abortIndex
 }
 
-func (c *Context) isBreak() bool {
-	_, has := c.caches["SYS_BREAK"]
-	return has
+func (c *Context) IsAbort() bool {
+	return c.index >= abortIndex
 }
 
 func (c *Context) Status(code int) {
