@@ -1,3 +1,3 @@
-module github.com/shlande/sn
+module github.com/shlande/mygin
 
 go 1.14

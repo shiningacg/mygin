@@ -1,4 +1,4 @@
-package sn
+package mygin
 
 import (
 	"math"
