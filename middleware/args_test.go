@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/shlande/mygin"
+	"github.com/shiningacg/mygin"
 	"log"
 	"testing"
 )

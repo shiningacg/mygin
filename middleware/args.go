@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
-	"github.com/shlande/mygin"
+	"github.com/shiningacg/mygin"
 	"io"
 	"log"
 	"reflect"

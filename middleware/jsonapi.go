@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
-	"github.com/shlande/mygin"
+	"github.com/shiningacg/mygin"
 )
 
 func NewJsonResponse() *JsonResponse {
