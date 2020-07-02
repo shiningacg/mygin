@@ -1,3 +1,3 @@
-module github.com/shlande/mygin
+module github.com/shiningacg/mygin
 
 go 1.14
