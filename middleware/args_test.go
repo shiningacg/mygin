@@ -14,8 +14,26 @@ type DTO struct {
 }
 
 func TestArgs(t *testing.T) {
-	mygin := mygin.New()
-	root := mygin.Router()
+	server := mygin.New()
+	testArgsGet(server)
+	err := server.Run(":3112")
+	panic(err)
+}
+
+func testArgsGet(server *mygin.Engine) {
+	root := server.Router()
+	root.Get("/").Use(Args()).Do(func(context *mygin.Context) {
+		dto := &DTO{}
+		err := Merge(context, dto)
+		if err != nil {
+			log.Print(err)
+		}
+		fmt.Println(dto)
+	})
+}
+
+func testArgsPost(server *mygin.Engine) {
+	root := server.Router()
 	root.Post("/").Use(Args()).Do(func(context *mygin.Context) {
 		dto := &DTO{}
 		err := Merge(context, dto)
@@ -24,6 +42,4 @@ func TestArgs(t *testing.T) {
 		}
 		fmt.Println(dto)
 	})
-	err := mygin.Run(":3112")
-	panic(err)
 }

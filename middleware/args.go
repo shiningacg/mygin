@@ -5,6 +5,7 @@ import (
 	"github.com/shiningacg/mygin"
 	"io"
 	"log"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -26,8 +27,18 @@ func Args() mygin.HandlerFunc {
 			for key, value := range args {
 				context.Set(ArgsPrefix+key, value)
 			}
-			context.Next()
 		}
+		if context.Request.Method == "GET" {
+			u, err := url.Parse(context.Request.RequestURI)
+			if err != nil {
+				return
+			}
+			args := u.Query()
+			for key, value := range args {
+				context.Set(ArgsPrefix+key, value[0])
+			}
+		}
+		context.Next()
 	}
 }
 
