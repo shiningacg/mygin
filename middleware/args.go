@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/shiningacg/mygin"
 	"io"
 	"log"
@@ -16,7 +17,7 @@ const (
 )
 
 // 负责参数校验
-func Args() mygin.HandlerFunc {
+func Args(target interface{}) mygin.HandlerFunc {
 	return func(context *mygin.Context) {
 		if context.Request.Method == "POST" {
 			args, err := parseBodyJson(context.Request.Body)
@@ -24,8 +25,8 @@ func Args() mygin.HandlerFunc {
 				log.Println(err)
 				context.Abort()
 			}
-			for key, value := range args {
-				context.Set(ArgsPrefix+key, value)
+			for k, v := range args {
+				context.Set(key(k), v)
 			}
 		}
 		if context.Request.Method == "GET" {
@@ -34,9 +35,16 @@ func Args() mygin.HandlerFunc {
 				return
 			}
 			args := u.Query()
-			for key, value := range args {
-				context.Set(ArgsPrefix+key, value[0])
+			for k, v := range args {
+				context.Set(key(k), v[0])
 			}
+		}
+		// 是否需要控制参数
+		err := checkArgs(context, target)
+		if err != nil {
+			context.Error(err)
+			context.Status(400)
+			context.Abort()
 		}
 		context.Next()
 	}
@@ -55,17 +63,9 @@ func Merge(ctx *mygin.Context, target interface{}) error {
 		// 判断filed的类型是不是指针
 		vl := v.Field(i)
 		tp := t.Field(i)
-		var value interface{}
 		// 字段名称
-		Name := tp.Name
-		// Tag名
-		Tag := tp.Tag.Get("json")
-		// 寻找字段
-		if temp := ctx.Value(key(strings.ToLower(Name))); temp != nil {
-			value = temp
-		} else if temp := ctx.Value(key(Tag)); temp != nil {
-			value = temp
-		} else {
+		value := fieldValueFromCtx(ctx, tp)
+		if value == nil {
 			continue
 		}
 		val, ok1 := value.(string)
@@ -110,6 +110,19 @@ func Merge(ctx *mygin.Context, target interface{}) error {
 	return nil
 }
 
+func fieldValueFromCtx(store mygin.ValueStore, tp reflect.StructField) interface{} {
+	name := tp.Name
+	// Tag名
+	tag := tp.Tag.Get("json")
+	// 寻找字段
+	if temp := store.Value(key(strings.ToLower(name))); temp != nil {
+		return temp
+	} else if temp := store.Value(key(tag)); temp != nil {
+		return temp
+	}
+	return nil
+}
+
 func readAll(dst []byte, src io.Reader) (int, error) {
 	var err error
 	var total, n int
@@ -146,4 +159,45 @@ func parseBodyJson(reader io.Reader) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return args, nil
+}
+
+func checkArgs(ctx *mygin.Context, target interface{}) error {
+	t := reflect.TypeOf(target).Elem()
+	count := t.NumField()
+	for i := 0; i < count; i++ {
+		f := t.Field(i)
+		tags := strings.Split(f.Tag.Get("args"), ";")
+		value := fieldValueFromCtx(ctx, f)
+		for _, tag := range tags {
+			// 寻找参数
+			err := getArgsHandleFunc(tag)(value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+type argsHandleFunc func(value interface{}) error
+
+func getArgsHandleFunc(tag string) argsHandleFunc {
+	switch tag {
+	case "required":
+		return argsRequired
+	default:
+		// TODO：添加提示
+		return argsDoNothing
+	}
+}
+
+func argsRequired(value interface{}) error {
+	if value == nil {
+		return errors.New("参数缺失")
+	}
+	return nil
+}
+
+func argsDoNothing(value interface{}) error {
+	return nil
 }
