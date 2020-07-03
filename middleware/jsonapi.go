@@ -24,12 +24,16 @@ func (r *JsonResponse) Value(key string) interface{} {
 	return r.m[key]
 }
 
-func (r *JsonResponse) Encode() []byte {
+func (r *JsonResponse) Encode() ([]byte, error) {
 	b, err := json.Marshal(r.m)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return b
+	return b, nil
+}
+
+func (r *JsonResponse) IsEmpty() bool {
+	return len(r.m) == 0
 }
 
 const JsonApiKey = "JsonApi"
@@ -58,14 +62,24 @@ func JsonAPI() mygin.HandlerFunc {
 		rsp := NewJsonResponse()
 		context.Set(JsonApiKey, rsp)
 		context.Next()
-		b := rsp.Encode()
-		if b == nil {
+		if err := context.GetError(); err != nil {
+			errResponse(rsp, -1, err)
+		}
+		if rsp.IsEmpty() {
+			sucResponse(rsp, nil)
+		}
+		b, err := rsp.Encode()
+		if err != nil {
 			rsp = NewJsonResponse()
 			errResponse(rsp, 500, errors.New("服务内部错误：数据无法转换"))
-			b = rsp.Encode()
+			b, _ = rsp.Encode()
 		}
 		context.Body(b)
 	}
+}
+
+func IsJsonAPILoad(ctx *mygin.Context) bool {
+	return ctx.Value(JsonApiKey) == nil
 }
 
 func JsonRawResponse(ctx *mygin.Context) *JsonResponse {
