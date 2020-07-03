@@ -17,6 +17,11 @@ func NewContext(r *http.Request, p http.ResponseWriter) *Context {
 	}
 }
 
+type ValueStore interface {
+	Value(key string) interface{}
+	Set(key string, value interface{})
+}
+
 // 自动生成
 type Context struct {
 	// 存放结果
@@ -54,7 +59,7 @@ func (c *Context) Body(b []byte) {
 func (c *Context) GetBody() []byte {
 	body := c.Value("SYS_BODY")
 	if body == nil {
-		return []byte{}
+		return nil
 	}
 	return body.([]byte)
 }
@@ -65,6 +70,18 @@ func (c *Context) Next() {
 		c.handlers[c.index](c)
 		c.index++
 	}
+}
+
+func (c *Context) Error(err error) {
+	c.Set("SYS_ERROR", err)
+}
+
+func (c *Context) GetError() error {
+	err := c.Value("SYS_ERROR")
+	if err == nil {
+		return nil
+	}
+	return err.(error)
 }
 
 // 设置状态码
