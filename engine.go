@@ -2,14 +2,16 @@ package mygin
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net/http"
-	"net/url"
 )
 
 var (
 	default404Body = []byte("404 page not found")
 	default405Body = []byte("405 method not allowed")
+	default500Body = []byte("500 internal server error")
+	default400Body = []byte("400 bad request")
 
 	ErrReachLimitSize = errors.New("发送的数据大小超过限制")
 )
@@ -37,46 +39,56 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (e *Engine) handleHTTPRequest(ctx *Context) {
-	req := ctx.Request
-	w := ctx.Write
-	// 参数获取
-	if req.Method == GET {
-		// get参数获取
-		e.parseGet(ctx)
-	}
-	// TODO：form数据获取
 	// 路由匹配
-	handle := e.tree.match(req.RequestURI, req.Method)
+	handle := e.tree.match(ctx.Request.RequestURI, ctx.Request.Method)
 	// 开始进行处理
 	handle(ctx)
 	// 写body和status
-	w.WriteHeader(ctx.GetStatus())
 	writeHeader(ctx)
-	_, err := w.Write(ctx.GetBody())
-	if err != nil {
-		log.Print(err)
-	}
-	err = req.Body.Close()
-	if err != nil {
-		log.Print(err)
-	}
-}
-
-func (e *Engine) parseGet(ctx *Context) {
-	u, err := url.Parse(ctx.Request.RequestURI)
-	if err != nil {
-		return
-	}
-	m := u.Query()
-	for name, value := range m {
-		ctx.Set(name, value[0])
-	}
+	writeBody(ctx)
 }
 
 func writeHeader(ctx *Context) {
+	ctx.Write.WriteHeader(ctx.GetStatus())
 	headers := ctx.GetHeaders()
 	for key, value := range headers {
 		ctx.Write.Header().Set(key, value)
+	}
+}
+
+func writeBody(ctx *Context) {
+	body := ctx.GetBody()
+	if code := ctx.GetStatus(); body == nil && code != 200 {
+		if err := ctx.GetError(); err != nil {
+			body = []byte(err.Error())
+		} else {
+			switch code {
+			case 400:
+				body = default400Body
+			case 500:
+				body = default500Body
+			case 404:
+				body = default404Body
+			default:
+				body = default500Body
+			}
+		}
+	}
+	for {
+		n, err := ctx.Write.Write(body)
+		if err != nil {
+			if err != io.EOF {
+				log.Print(err)
+			}
+			break
+		}
+		if n == len(body) {
+			break
+		}
+	}
+	err := ctx.Request.Body.Close()
+	if err != nil {
+		log.Print(err)
 	}
 }
 
