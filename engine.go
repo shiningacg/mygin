@@ -98,7 +98,7 @@ func (e *Engine) Run(addr string) error {
 
 func (e *Engine) Router() RouterGroup {
 	return &routerGroup{
-		path:     "/",
+		path:     "",
 		engine:   e,
 		handlers: make(HandlersChain, 0, 9),
 	}

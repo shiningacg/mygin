@@ -45,7 +45,7 @@ func (r *routerGroup) handle(method, path string) *router {
 	copy(handlers, r.handlers)
 	return &router{
 		method:   method,
-		path:     path,
+		path:     r.path + path,
 		engine:   r.engine,
 		handlers: handlers,
 	}
