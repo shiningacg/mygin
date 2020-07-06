@@ -19,16 +19,16 @@ const (
 // 负责参数校验
 func Args(target interface{}) mygin.HandlerFunc {
 	return func(context *mygin.Context) {
-		if context.Request.Method == "POST" {
-			args, err := parseBodyJson(context.Request.Body)
-			if err != nil {
-				log.Println(err)
-				context.Abort()
-			}
-			for k, v := range args {
-				context.Set(key(k), v)
-			}
+		// 尝试从body内获取数据
+		args, err := parseBodyJson(context.Request.Body)
+		if err != nil {
+			log.Println(err)
+			context.Abort()
 		}
+		for k, v := range args {
+			context.Set(key(k), v)
+		}
+		// 针对get方法的参数获取
 		if context.Request.Method == "GET" {
 			u, err := url.Parse(context.Request.RequestURI)
 			if err != nil {
@@ -40,7 +40,7 @@ func Args(target interface{}) mygin.HandlerFunc {
 			}
 		}
 		// 是否需要控制参数
-		err := checkArgs(context, target)
+		err = checkArgs(context, target)
 		if err != nil {
 			context.Error(err)
 			context.Status(400)
@@ -148,7 +148,7 @@ func parseBodyJson(reader io.Reader) (map[string]interface{}, error) {
 	var n int
 	temp := make([]byte, 1024*100)
 	n, err = readAll(temp, reader)
-	if err != nil {
+	if err != nil || n == 0 {
 		return nil, err
 	}
 	// 拿到数据

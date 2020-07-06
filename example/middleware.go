@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/shlande/mygin"
-	"github.com/shlande/mygin/middleware"
+	"github.com/shiningacg/mygin"
+	"github.com/shiningacg/mygin/middleware"
 )
 
 func TestMiddleware() mygin.HandlerFunc {
