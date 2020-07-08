@@ -30,7 +30,8 @@ type routerGroup struct {
 	path           string
 	name           string
 	subRouterGroup map[string]*routerGroup
-	handler        map[string]HandlerFunc
+	// 管理处理方法用
+	handler map[string]HandlerFunc
 	// 存放中间件
 	middleware HandlersChain
 }
@@ -48,6 +49,17 @@ func (r *routerGroup) Group(name string) RouterGroup {
 	}
 	r.addRouterGroup(name)
 	return r.getRouterGroup(name)
+}
+
+func (r *routerGroup) GetHandler(method string) HandlerFunc {
+	handler, has := r.handler[method]
+	if !has {
+		handler = r.handler[ANY]
+	}
+	if handler == nil {
+		return bodyWriter(default404Body)
+	}
+	return handler
 }
 
 // 处理一下请求，但是仅仅是get类
@@ -69,20 +81,24 @@ func getNodeFromPath(nodeString string) []string {
 }
 
 func getNodeFromTemplate(template string) (nodeName []string, args []string) {
+	var node string
+	var i int
 	arr := strings.Split(template, "/")[1:]
-	for i, node := range arr {
-		if node[0] == ':' {
+	for i, node = range arr {
+		if prefix := node[0]; prefix == ':' || prefix == '*' {
 			nodeName = arr[:i]
 			args = arr[i:]
-			break
+			goto END
 		}
 	}
 	// 没有参数
-	if nodeName == nil {
-		nodeName = arr
-		return
-	}
+	nodeName = arr
+	return
+END:
 	for i, arg := range args {
+		if arg == "*" {
+			continue
+		}
 		args[i] = arg[1:]
 	}
 	return
@@ -126,11 +142,15 @@ func (r *routerGroup) addRouter(rt *router) {
 		node = r.getRouterGroup(name)
 	}
 	if node == nil {
-		panic("无法找到节点")
+		node = rt.group
 	}
 	node.addHandler(rt.method, func(c *Context) {
 		argstr := c.Request.RequestURI[len(node.path):]
 		inputs := getNodeFromPath(argstr)
+		// 判断是否是全局匹配
+		if len(args) == 1 && args[0] == "*" {
+			goto HANDLE
+		}
 		// 参数个数不匹配
 		if len(args) != len(inputs) {
 			bodyWriter(default404Body)(c)
@@ -140,6 +160,7 @@ func (r *routerGroup) addRouter(rt *router) {
 		for i, key := range args {
 			c.setRouterValue(key, inputs[i])
 		}
+	HANDLE:
 		// 附加方法
 		c.handlers = rt.handlers
 		// 启动处理

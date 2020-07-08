@@ -18,6 +18,9 @@ func main() {
 		fmt.Println(context.RouterValue("id"))
 		fmt.Println(context.RouterValue("name"))
 	})
+	r.Any("/*").Do(func(context *mygin.Context) {
+		context.Body([]byte("没有找到页面"))
+	})
 	r.Post("/json").Use(middleware.JsonAPI(), TestJsonApi()).Do(func(context *mygin.Context) {
 		middleware.SucResponse(context, "测试json数据成功！")
 	})
