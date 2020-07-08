@@ -27,10 +27,6 @@ type Engine struct {
 	//
 }
 
-func (e *Engine) addRouter(httpMethod, path string, handler HandlerFunc) {
-	e.tree.addRouter(httpMethod, path, handler)
-}
-
 func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c := NewContext(req, w)
 	c.Request = req
@@ -44,7 +40,7 @@ func (e *Engine) handleHTTPRequest(ctx *Context) {
 	// 开始进行处理
 	handle(ctx)
 	// 写body和status
-	if !ctx.IsProto() {
+	if ctx.IsProto() {
 		writeHeader(ctx)
 		writeBody(ctx)
 	}
@@ -99,11 +95,7 @@ func (e *Engine) Run(addr string) error {
 }
 
 func (e *Engine) Router() RouterGroup {
-	return &routerGroup{
-		path:     "",
-		engine:   e,
-		handlers: make(HandlersChain, 0, 9),
-	}
+	return e.tree.root
 }
 
 // 新建实例
