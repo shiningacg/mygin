@@ -44,8 +44,10 @@ func (e *Engine) handleHTTPRequest(ctx *Context) {
 	// 开始进行处理
 	handle(ctx)
 	// 写body和status
-	writeHeader(ctx)
-	writeBody(ctx)
+	if !ctx.IsProto() {
+		writeHeader(ctx)
+		writeBody(ctx)
+	}
 }
 
 func writeHeader(ctx *Context) {

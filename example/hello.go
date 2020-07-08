@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/shlande/mygin"
-	"github.com/shlande/mygin/middleware"
+	"github.com/shiningacg/mygin"
+	"github.com/shiningacg/mygin/middleware"
 	"log"
 )
 
 func main() {
 	server := mygin.New()
 	r := server.Router()
+	r.Any("/public")
 	r.Get("/hello").Use(TestMiddleware()).Do(func(context *mygin.Context) {
 		context.Body([]byte("hello world"))
 		fmt.Println("ccc")

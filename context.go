@@ -32,8 +32,24 @@ type Context struct {
 	Write    http.ResponseWriter
 }
 
+func (c *Context) Proto() {
+	c.Set("SYS_PROTO", true)
+}
+
+func (c *Context) IsProto() bool {
+	return c.Value("SYS_PROTO") == nil
+}
+
 func (c *Context) Value(key string) interface{} {
 	return c.caches[key]
+}
+
+func (c *Context) RouterValue(key string) string {
+	return c.Value("SYS_ROUTER_" + key).(string)
+}
+
+func (c *Context) setRouterValue(key string, value string) {
+	c.Set("SYS_ROUTER_"+key, value)
 }
 
 func (c *Context) Set(key string, value interface{}) {
