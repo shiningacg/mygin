@@ -43,12 +43,15 @@ func (r *routerGroup) Group(name string) RouterGroup {
 		panic("路径必须以'/'开始")
 	}
 	// 判断是否有多个节点
-	nodes := getNodeFromPath(name[1:])
+	nodes, args := getNodeFromTemplate(name)
+	if len(args) != 0 {
+		panic("不能在group中添加动态路由")
+	}
 	if len(nodes) != 1 {
 		panic("不能添加多个节点或空节点")
 	}
-	r.addRouterGroup(name)
-	return r.getRouterGroup(name)
+	r.addRouterGroup(nodes[0])
+	return r.getRouterGroup(nodes[0])
 }
 
 func (r *routerGroup) GetHandler(method string) HandlerFunc {

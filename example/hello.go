@@ -10,11 +10,17 @@ import (
 func main() {
 	server := mygin.New()
 	r := server.Router()
+	r.Group("/group").Any("/hi").Do(func(context *mygin.Context) {
+		context.Body([]byte("nihao"))
+	})
+	r.Any("/any").Do(func(context *mygin.Context) {
+		context.Body([]byte("lala"))
+	})
 	r.Get("/hello").Use(TestMiddleware()).Do(func(context *mygin.Context) {
 		context.Body([]byte("hello world"))
 		fmt.Println("ccc")
 	})
-	r.Post("/hello/:id/:name").Do(func(context *mygin.Context) {
+	r.Post("/user/:id").Do(func(context *mygin.Context) {
 		fmt.Println(context.RouterValue("id"))
 		fmt.Println(context.RouterValue("name"))
 	})
@@ -29,3 +35,19 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+/*func _main()  {
+	New()
+}
+
+type MyHttpServer struct {}
+
+func (m MyHttpServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	writer.Write([]byte("hello"))
+}
+
+func New() {
+	server := MyHttpServer{}
+	handler := mygin.WrapHttpHandle(MyHttpServer{})
+	router.aa().Do(handler)
+}*/
