@@ -3,6 +3,7 @@ package mygin
 import (
 	"math"
 	"net/http"
+	"strings"
 )
 
 const abortIndex int8 = math.MaxInt8 / 2
@@ -44,7 +45,16 @@ func (c *Context) Value(key string) interface{} {
 	return c.caches[key]
 }
 
+func (c *Context) RemoteAddr() string {
+	raws := strings.Split(c.Request.RemoteAddr, ":")
+	return strings.Join(raws[:len(raws)-1], ":")
+}
+
 func (c *Context) RouterValue(key string) string {
+	value := c.Value("SYS_ROUTER_" + key)
+	if value == nil {
+		return ""
+	}
 	return c.Value("SYS_ROUTER_" + key).(string)
 }
 
