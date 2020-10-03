@@ -10,6 +10,7 @@ const (
 	PUT    = "PUT"
 	DELETE = "DELETE"
 	PATCH  = "PATCH"
+	HEAD   = "HEAD"
 	ANY    = "ANY"
 )
 
@@ -22,6 +23,7 @@ type RouterGroup interface {
 	Put(path string) Router
 	Delete(path string) Router
 	Patch(path string) Router
+	Head(path string) Router
 	Any(path string) Router
 	Use(handles ...HandlerFunc) RouterGroup
 }
@@ -201,6 +203,10 @@ func (r *routerGroup) Delete(path string) Router {
 
 func (r *routerGroup) Patch(path string) Router {
 	return r.handle(PATCH, path)
+}
+
+func (r *routerGroup) Head(path string) Router {
+	return r.handle(HEAD, path)
 }
 
 func (r *routerGroup) Any(path string) Router {

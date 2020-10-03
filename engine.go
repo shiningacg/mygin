@@ -55,6 +55,10 @@ func writeHeader(ctx *Context) {
 }
 
 func writeBody(ctx *Context) {
+	// 如果是head请求，不允许返回body内容
+	if ctx.Request.Method == HEAD {
+		ctx.Body(nil)
+	}
 	body := ctx.GetBody()
 	if code := ctx.GetStatus(); body == nil && code != 200 {
 		if err := ctx.GetError(); err != nil {

@@ -30,6 +30,9 @@ func main() {
 	r.Post("/json").Use(middleware.JsonAPI(), TestJsonApi()).Do(func(context *mygin.Context) {
 		middleware.SucResponse(context, "测试json数据成功！")
 	})
+	r.Head("/json").Use(middleware.JsonAPI(), TestJsonApi()).Do(func(context *mygin.Context) {
+		middleware.SucResponse(context, "测试head")
+	})
 	err := server.Run(":3112")
 	if err != nil {
 		log.Fatal(err)
