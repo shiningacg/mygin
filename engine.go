@@ -2,6 +2,7 @@ package mygin
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -47,11 +48,15 @@ func (e *Engine) handleHTTPRequest(ctx *Context) {
 }
 
 func writeHeader(ctx *Context) {
-	ctx.Write.WriteHeader(ctx.GetStatus())
+	// 自动设置content-length，因为head会刷新掉
+	if body := ctx.GetBody(); ctx.GetHeader("Content-Length") == "" && body != nil {
+		ctx.Header("Content-Length", fmt.Sprint(len(body)))
+	}
 	headers := ctx.GetHeaders()
 	for key, value := range headers {
 		ctx.Write.Header().Set(key, value)
 	}
+	ctx.Write.WriteHeader(ctx.GetStatus())
 }
 
 func writeBody(ctx *Context) {
