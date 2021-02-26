@@ -5,13 +5,14 @@ import (
 )
 
 const (
-	GET    = "GET"
-	POST   = "POST"
-	PUT    = "PUT"
-	DELETE = "DELETE"
-	PATCH  = "PATCH"
-	HEAD   = "HEAD"
-	ANY    = "ANY"
+	GET     = "GET"
+	POST    = "POST"
+	PUT     = "PUT"
+	DELETE  = "DELETE"
+	PATCH   = "PATCH"
+	HEAD    = "HEAD"
+	OPTIONS = "OPTIONS"
+	ANY     = "ANY"
 )
 
 type RouterGroup interface {
@@ -24,6 +25,7 @@ type RouterGroup interface {
 	Delete(path string) Router
 	Patch(path string) Router
 	Head(path string) Router
+	Options(path string) Router
 	Any(path string) Router
 	Use(handles ...HandlerFunc) RouterGroup
 }
@@ -207,6 +209,10 @@ func (r *routerGroup) Patch(path string) Router {
 
 func (r *routerGroup) Head(path string) Router {
 	return r.handle(HEAD, path)
+}
+
+func (r *routerGroup) Options(path string) Router {
+	return r.handle(OPTIONS, path)
 }
 
 func (r *routerGroup) Any(path string) Router {
